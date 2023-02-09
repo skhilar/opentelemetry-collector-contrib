@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/kinesis"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	guuid "github.com/google/uuid"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awskinesisreceiver/internal/decompressor"
 	chk "github.com/vmware/vmware-go-kcl-v2/clientlibrary/checkpoint"
 	cfg "github.com/vmware/vmware-go-kcl-v2/clientlibrary/config"
 	wk "github.com/vmware/vmware-go-kcl-v2/clientlibrary/worker"
@@ -100,7 +101,7 @@ func newTracesReceiver(config Config, set receiver.CreateSettings, unmarshalers 
 	}
 	kclConfig := cfg.NewKinesisClientLibConfig(config.AWS.ConsumerGroupName, config.AWS.StreamName, config.AWS.Region,
 		id.String()).
-		WithInitialPositionInStream(cfg.TRIM_HORIZON).
+		WithInitialPositionInStream(positionMap[config.AWS.PositionInStream]).
 		WithMaxRecords(config.AWS.MaxRecordSize).
 		WithMaxLeasesForWorker(cfg.DefaultMaxLeasesForWorker).
 		WithShardSyncIntervalMillis(config.AWS.Interval).
@@ -108,7 +109,8 @@ func newTracesReceiver(config Config, set receiver.CreateSettings, unmarshalers 
 		WithKinesisEndpoint(config.AWS.KinesisEndpoint).
 		WithLogger(logger)
 
-	worker := wk.NewWorker(newProcessorFactory(nextConsumer, unmarshaler, set.Logger), kclConfig)
+	decompressor := decompressor.NewDecompressor(config.Compression)
+	worker := wk.NewWorker(newProcessorFactory(nextConsumer, unmarshaler, decompressor, set.Logger), kclConfig)
 	worker.WithKinesis(kinesisOptions.NewKinesisClient(awsConf, kinesisOpts...))
 	chkPointer := chk.NewDynamoCheckpoint(kclConfig).WithDynamoDB(dynamoOptions.NewDynamoDBClient(awsConf, dynamoOpts...))
 	worker.WithCheckpointer(chkPointer)

@@ -2,13 +2,19 @@ package awskinesisreceiver
 
 import (
 	"context"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awskinesisreceiver/internal/decompressor"
 	kc "github.com/vmware/vmware-go-kcl-v2/clientlibrary/interfaces"
 	"go.opentelemetry.io/collector/consumer"
 	"go.uber.org/zap"
 )
 
-func newProcessorFactory(nextConsumer consumer.Traces, unmarshaler TracesUnmarshaler, logger *zap.Logger) kc.IRecordProcessorFactory {
-	kp := kinesisProcessor{nextConsumer: nextConsumer, unmarshaler: unmarshaler, logger: logger}
+func newProcessorFactory(nextConsumer consumer.Traces, unmarshaler TracesUnmarshaler, decompressor decompressor.DeCompressor, logger *zap.Logger) kc.IRecordProcessorFactory {
+	kp := kinesisProcessor{
+		nextConsumer: nextConsumer,
+		unmarshaler:  unmarshaler,
+		decompressor: decompressor,
+		logger:       logger,
+	}
 	return &kinesisProcessorFactory{kinesisProcessor: &kp}
 }
 
@@ -25,6 +31,7 @@ type kinesisProcessor struct {
 	unmarshaler  TracesUnmarshaler
 	shardId      string
 	logger       *zap.Logger
+	decompressor decompressor.DeCompressor
 }
 
 func (kp *kinesisProcessor) Initialize(input *kc.InitializationInput) {
@@ -38,7 +45,11 @@ func (kp *kinesisProcessor) ProcessRecords(input *kc.ProcessRecordsInput) {
 		return
 	}
 	for _, record := range records {
-		traces, err := kp.unmarshaler.Unmarshal(record.Data)
+		data, err := kp.decompressor.Do(record.Data)
+		if err != nil {
+			kp.logger.Error("not able to decompress ", zap.Error(err))
+		}
+		traces, err := kp.unmarshaler.Unmarshal(data)
 		if err != nil {
 			kp.logger.Error("not able to unmarshal traces ", zap.Error(err))
 			continue

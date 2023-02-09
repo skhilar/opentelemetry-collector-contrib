@@ -2,16 +2,26 @@ package awskinesisreceiver
 
 import (
 	"context"
+	cfg "github.com/vmware/vmware-go-kcl-v2/clientlibrary/config"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/receiver"
 )
 
 const (
-	typeStr         = "kinesisrcv"
-	stability       = component.StabilityLevelAlpha
-	defaultEncoding = "otlp"
+	typeStr                 = "awskinesis"
+	stability               = component.StabilityLevelAlpha
+	defaultEncoding         = "otlp"
+	defaultPositionInStream = "TRIM_HORIZON"
+	defaultConsumerGroup    = "collector"
+	defaultCompression      = "none"
 )
+
+var positionMap = map[string]cfg.InitialPositionInStream{
+	"LATEST":       cfg.LATEST,
+	"TRIM_HORIZON": cfg.TRIM_HORIZON,
+	"AT_TIMESTAMP": cfg.AT_TIMESTAMP,
+}
 
 type FactoryOption func(factory *kinesisReceiverFactory)
 
@@ -39,8 +49,14 @@ func NewFactory(options ...FactoryOption) receiver.Factory {
 
 func createDefaultConfig() component.Config {
 	return &Config{
-		Encoding: defaultEncoding,
-		AWS:      AWSConfig{MaxRecordSize: 500, Interval: 5000},
+		Encoding:    defaultEncoding,
+		Compression: defaultCompression,
+		AWS: AWSConfig{
+			MaxRecordSize:     500,
+			Interval:          5000,
+			ConsumerGroupName: defaultConsumerGroup,
+			PositionInStream:  defaultPositionInStream,
+		},
 	}
 }
 

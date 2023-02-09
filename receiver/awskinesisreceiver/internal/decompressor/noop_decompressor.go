@@ -6,12 +6,11 @@ type noop struct {
 	data io.Reader
 }
 
-func NewNoopCompressor() DeCompressor {
-	return &decompressor{decompressor: &noop{}}
+func NewReader(r io.Reader) *noop {
+	return &noop{data: r}
 }
-
 func (n *noop) Read(p []byte) (int, error) {
-	return len(p), nil
+	return n.data.Read(p)
 }
 
 func (n *noop) Reset(r io.Reader) error {

@@ -7,7 +7,7 @@ import (
 
 // AWSConfig contains AWS specific configuration such as awskinesis stream, region, etc.
 type AWSConfig struct {
-	ConsumerGroupName string `mapstructure:"application_name"`
+	ConsumerGroupName string `mapstructure:"consumer_group_name"`
 	StreamName        string `mapstructure:"stream_name"`
 	KinesisEndpoint   string `mapstructure:"kinesis_endpoint"`
 	DynamoDBEndpoint  string `mapstructure:"dynamodb_endpoint"`
@@ -15,6 +15,7 @@ type AWSConfig struct {
 	Role              string `mapstructure:"role"`
 	MaxRecordSize     int    `mapstructure:"max_record_size"`
 	Interval          int    `mapstructure:"interval"`
+	PositionInStream  string `mapstructure:"position_in_stream"`
 }
 
 type Encoding struct {
@@ -37,9 +38,6 @@ func (cfg *Config) Validate() error {
 	}
 	if len(cfg.AWS.StreamName) == 0 {
 		return fmt.Errorf("stream name should be configured")
-	}
-	if len(cfg.AWS.ConsumerGroupName) == 0 {
-		return fmt.Errorf("consumer group name should be configured")
 	}
 	return nil
 }
