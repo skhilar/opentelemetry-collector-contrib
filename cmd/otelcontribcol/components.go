@@ -102,6 +102,7 @@ import (
 	awsfirehosereceiver "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awsfirehosereceiver"
 	awskinesisreceiver "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awskinesisreceiver"
 	awsxrayreceiver "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awsxrayreceiver"
+	awsxraytracereceiver "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awsxraytracereceiver"
 	azureeventhubreceiver "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/azureeventhubreceiver"
 	bigipreceiver "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/bigipreceiver"
 	carbonreceiver "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/carbonreceiver"
@@ -272,6 +273,7 @@ func components() (otelcol.Factories, error) {
 		zipkinreceiver.NewFactory(),
 		zookeeperreceiver.NewFactory(),
 		awskinesisreceiver.NewFactory(),
+		awsxraytracereceiver.NewFactory(),
 	)
 	if err != nil {
 		return otelcol.Factories{}, err
